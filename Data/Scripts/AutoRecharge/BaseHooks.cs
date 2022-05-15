@@ -46,8 +46,8 @@ namespace UnFoundBug.AutoSwitch
         /// <inheritdoc/>
         public override void UpdateOnceBeforeFrame()
         {
-            this.DetachEvents();
-            this.AttachEvents();
+            this.sHandler = new StorageHandler(this.Entity);
+            this.TypedEntity_IsWorkingChanged(null);
             base.UpdateOnceBeforeFrame();
         }
 
@@ -58,12 +58,7 @@ namespace UnFoundBug.AutoSwitch
 
         private void AttachEvents()
         {
-            if (!this.attached)
-            {
-                this.TypedEntity.IsWorkingChanged += this.TypedEntity_IsWorkingChanged;
-                this.TypedEntity_IsWorkingChanged(null);
-                this.attached = true;
-            }
+            this.TypedEntity.IsWorkingChanged += this.TypedEntity_IsWorkingChanged;
         }
 
         private void TypedEntity_IsWorkingChanged(IMyCubeBlock obj)
@@ -80,11 +75,7 @@ namespace UnFoundBug.AutoSwitch
 
         private void DetachEvents()
         {
-            if (this.attached)
-            {
-                this.TypedEntity.IsWorkingChanged -= this.TypedEntity_IsWorkingChanged;
-                this.attached = false;
-            }
+            this.TypedEntity.IsWorkingChanged -= this.TypedEntity_IsWorkingChanged;
         }
 
         private void HandlePotentialNewConnection()
