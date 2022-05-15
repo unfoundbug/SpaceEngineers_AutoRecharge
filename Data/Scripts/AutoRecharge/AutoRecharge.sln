@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32428.217
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Linked LIght", "Linked LIght.csproj", "{EBDF9B6E-C9B1-496A-93EE-B5CC1CEA7727}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoRecharge", "AutoRecharge.csproj", "{EBDF9B6E-C9B1-496A-93EE-B5CC1CEA7727}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

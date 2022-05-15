@@ -1,14 +1,11 @@
-﻿// <copyright file="LightHookHelper.cs" company="UnFoundBug">
+﻿// <copyright file="ConnectorControlsHelper.cs" company="UnFoundBug">
 // Copyright (c) UnFoundBug. All rights reserved.
 // </copyright>
 
-namespace UnFoundBug.LightLink
+namespace UnFoundBug.AutoSwitch
 {
-    using System.Collections.Generic;
-    using System.Linq;
     using Sandbox.ModAPI;
     using Sandbox.ModAPI.Interfaces.Terminal;
-    using VRage.Game.ModAPI;
     using VRage.ModAPI;
     using VRage.Utils;
 
@@ -21,9 +18,10 @@ namespace UnFoundBug.LightLink
         private static IMyTerminalControlSeparator separator;
         private static IMyTerminalControlOnOffSwitch chargeOnConnectToggle;
         private static IMyTerminalControlOnOffSwitch staticOnlyToggle;
+        private static IMyTerminalControlOnOffSwitch includeThrustersToggle;
 
         /// <summary>
-        /// Attach controls to light terminal menus.
+        /// Attach controls to terminal menus.
         /// </summary>
         public static void AttachControls()
         {
@@ -37,62 +35,74 @@ namespace UnFoundBug.LightLink
                 return;
             }
 
-            // Logging.Instance.WriteLine("Light hook controls for " + typeof(IMyLightingBlock).Name + " started.");
-            separator = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSeparator, IMyLightingBlock>("lightlink_seperator");
+            separator = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSeparator, IMyShipConnector>("autoswitch_seperator");
             separator.Enabled = (lb) => true;
-            separator.Visible = (lb) => true;
+            separator.Visible = block => !block.CubeGrid.IsStatic;
 
             Logging.Debug("Seperator initialised");
 
-            chargeOnConnectToggle = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlOnOffSwitch, IMyLightingBlock>("lightlink_scanSubGrid");
-            chargeOnConnectToggle.Title = MyStringId.GetOrCompute("Scan Subgrids");
+            chargeOnConnectToggle = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlOnOffSwitch, IMyShipConnector>("autoswitch_autoswitch");
+            chargeOnConnectToggle.Title = MyStringId.GetOrCompute("Auto Recharge");
             chargeOnConnectToggle.OnText = MyStringId.GetOrCompute("Enabled");
             chargeOnConnectToggle.OffText = MyStringId.GetOrCompute("Disabled");
-            chargeOnConnectToggle.Tooltip = MyStringId.GetOrCompute("WARNING: Can cause alot of server load!");
+            chargeOnConnectToggle.Tooltip = MyStringId.GetOrCompute("When enabled, connecting will cause ALL bateries on this grid to change to recharge");
             chargeOnConnectToggle.Getter = block =>
             {
                 StorageHandler handler = new StorageHandler(block);
-                return handler.SubGridScanningEnable;
+                return handler.AutoSwitch;
             };
             chargeOnConnectToggle.Setter = (block, value) =>
             {
                 StorageHandler handler = new StorageHandler(block);
-                handler.SubGridScanningEnable = value;
-                listControl.VisibleRowsCount = listControl.VisibleRowsCount;
+                handler.AutoSwitch = value;
                 block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
             };
-            chargeOnConnectToggle.Visible = block => true;
+            chargeOnConnectToggle.Visible = block => !block.CubeGrid.IsStatic;
             Logging.Debug("SubGridOnOff initialised");
 
-            staticOnlyToggle = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlOnOffSwitch, IMyLightingBlock>("lightlink_scanSubGrid");
-            staticOnlyToggle.Title = MyStringId.GetOrCompute("Filter Available blocks");
-            staticOnlyToggle.Tooltip = MyStringId.GetOrCompute("Filters less interesting blocks from appearing in the list, re-enter the menu for this to take effect.");
+            staticOnlyToggle = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlOnOffSwitch, IMyShipConnector>("autoswitch_scanSubGrid");
+            staticOnlyToggle.Title = MyStringId.GetOrCompute("Draw From Static Only");
+            staticOnlyToggle.Tooltip = MyStringId.GetOrCompute("Batteries will only change to recharge if the other grid is a station.");
             staticOnlyToggle.OnText = MyStringId.GetOrCompute("Enabled");
             staticOnlyToggle.OffText = MyStringId.GetOrCompute("Disabled");
             staticOnlyToggle.Getter = block =>
             {
                 StorageHandler handler = new StorageHandler(block);
-                return handler.BlockFiltering;
+                return handler.StaticOnly;
             };
             staticOnlyToggle.Setter = (block, value) =>
             {
                 StorageHandler handler = new StorageHandler(block);
-                handler.BlockFiltering = value;
+                handler.StaticOnly = value;
                 block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
             };
-            staticOnlyToggle.Visible = block => true;
+
+            staticOnlyToggle.Visible = block => !block.CubeGrid.IsStatic;
             Logging.Debug("FilterListOnOff initialised");
-            
-            MyAPIGateway.TerminalControls.AddControl<IMyLightingBlock>(separator);
-            MyAPIGateway.TerminalControls.AddControl<IMyLightingBlock>(chargeOnConnectToggle);
-            MyAPIGateway.TerminalControls.AddControl<IMyLightingBlock>(filterListCB);
-            MyAPIGateway.TerminalControls.AddControl<IMyLightingBlock>(listControl);
-            MyAPIGateway.TerminalControls.AddControl<IMyLightingBlock>(flagControl);
-            MyAPIGateway.TerminalControls.AddControl<IMyReflectorLight>(separator);
-            MyAPIGateway.TerminalControls.AddControl<IMyReflectorLight>(chargeOnConnectToggle);
-            MyAPIGateway.TerminalControls.AddControl<IMyReflectorLight>(filterListCB);
-            MyAPIGateway.TerminalControls.AddControl<IMyReflectorLight>(listControl);
-            MyAPIGateway.TerminalControls.AddControl<IMyReflectorLight>(flagControl);
+
+            includeThrustersToggle = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlOnOffSwitch, IMyShipConnector>("autoswitch_thrusters");
+            includeThrustersToggle.Title = MyStringId.GetOrCompute("Thruster Management");
+            includeThrustersToggle.Tooltip = MyStringId.GetOrCompute("If enabled, thrusters will also Disable on connection, and re-enable on disconnection");
+            includeThrustersToggle.OnText = MyStringId.GetOrCompute("Enabled");
+            includeThrustersToggle.OffText = MyStringId.GetOrCompute("Disabled");
+            includeThrustersToggle.Getter = block =>
+            {
+                StorageHandler handler = new StorageHandler(block);
+                return handler.ThrustersIncluded;
+            };
+            includeThrustersToggle.Setter = (block, value) =>
+            {
+                StorageHandler handler = new StorageHandler(block);
+                handler.ThrustersIncluded = value;
+                block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+            };
+
+            includeThrustersToggle.Visible = block => !block.CubeGrid.IsStatic;
+
+            MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(separator);
+            MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(chargeOnConnectToggle);
+            MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(staticOnlyToggle);
+            MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(includeThrustersToggle);
             Logging.Debug("Controls Registered");
         }
     }

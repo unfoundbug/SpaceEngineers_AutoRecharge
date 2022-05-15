@@ -1,12 +1,11 @@
-﻿// <copyright file="BaseLightHooks.cs" company="UnFoundBug">
+﻿// <copyright file="BaseHooks.cs" company="UnFoundBug">
 // Copyright (c) UnFoundBug. All rights reserved.
 // </copyright>
 
-namespace UnFoundBug.LightLink
+namespace UnFoundBug.AutoSwitch
 {
-    using System.Collections.Generic;
     using System.Linq;
-    using Sandbox.ModAPI;
+    using Sandbox.ModAPI.Ingame;
     using VRage.Game.Components;
     using VRage.Game.ModAPI;
     using VRage.ModAPI;
@@ -17,7 +16,6 @@ namespace UnFoundBug.LightLink
     /// </summary>
     public class BaseHooks : MyGameLogicComponent
     {
-        private IMyConnector typedEntity = null;
         private bool attached = false;
         private StorageHandler sHandler;
 
@@ -29,6 +27,7 @@ namespace UnFoundBug.LightLink
             ConnectorControlsHelper.AttachControls();
         }
 
+        private Sandbox.ModAPI.IMyShipConnector TypedEntity => (Sandbox.ModAPI.IMyShipConnector)this.Entity;
 
         /// <inheritdoc/>
         public override void Close()
@@ -41,9 +40,16 @@ namespace UnFoundBug.LightLink
         {
             base.Init(objectBuilder);
             this.sHandler = new StorageHandler(this.Entity);
+            this.AttachEvents();
         }
 
-
+        /// <inheritdoc/>
+        public override void UpdateOnceBeforeFrame()
+        {
+            this.DetachEvents();
+            this.AttachEvents();
+            base.UpdateOnceBeforeFrame();
+        }
 
         private void TargetBlock_OnMarkForClose(IMyEntity obj)
         {
@@ -52,13 +58,92 @@ namespace UnFoundBug.LightLink
 
         private void AttachEvents()
         {
+            if (!this.attached)
+            {
+                this.TypedEntity.IsWorkingChanged += this.TypedEntity_IsWorkingChanged;
+                this.TypedEntity_IsWorkingChanged(null);
+                this.attached = true;
+            }
+        }
 
+        private void TypedEntity_IsWorkingChanged(IMyCubeBlock obj)
+        {
+            if (this.TypedEntity.Status == MyShipConnectorStatus.Connected)
+            {
+                this.HandlePotentialNewConnection();
+            }
+            else
+            {
+                this.HandlePotentialDisconnection();
+            }
         }
 
         private void DetachEvents()
         {
-
+            if (this.attached)
+            {
+                this.TypedEntity.IsWorkingChanged -= this.TypedEntity_IsWorkingChanged;
+                this.attached = false;
+            }
         }
 
+        private void HandlePotentialNewConnection()
+        {
+            if (this.sHandler.AutoSwitch)
+            {
+                var source = this.TypedEntity.CubeGrid;
+                bool shouldRecharge = true;
+
+                if (this.sHandler.StaticOnly)
+                {
+                    if (!this.TypedEntity.OtherConnector.CubeGrid.IsStatic)
+                    {
+                        Logging.Debug("Ignoring connection, non-static grid");
+                        shouldRecharge = false;
+                    }
+                }
+
+                if (shouldRecharge)
+                {
+                    var batteries = source.GetFatBlocks<Sandbox.ModAPI.IMyBatteryBlock>();
+                    foreach (var battery in batteries)
+                    {
+                        battery.ChargeMode = ChargeMode.Recharge;
+                    }
+
+                    if (this.sHandler.ThrustersIncluded)
+                    {
+                        var thrusters = source.GetFatBlocks<Sandbox.ModAPI.IMyThrust>();
+                        Logging.Debug("Attempting to disable " + thrusters.Count() + " thrusters.");
+                        foreach (var thrust in thrusters)
+                        {
+                            thrust.Enabled = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void HandlePotentialDisconnection()
+        {
+            if (this.sHandler.AutoSwitch)
+            {
+                var batteries = this.TypedEntity.CubeGrid.GetFatBlocks<Sandbox.ModAPI.IMyBatteryBlock>();
+                foreach (var battery in batteries)
+                {
+                    battery.ChargeMode = ChargeMode.Auto;
+                }
+
+                if (this.sHandler.ThrustersIncluded)
+                {
+                    var thrusters = this.TypedEntity.CubeGrid.GetFatBlocks<Sandbox.ModAPI.IMyThrust>();
+                    Logging.Debug("Attempting to enable " + thrusters.Count() + " thrusters.");
+                    foreach (var thrust in thrusters)
+                    {
+                        thrust.Enabled = true;
+                    }
+                }
+            }
+        }
     }
 }

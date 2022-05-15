@@ -2,7 +2,7 @@
 // Copyright (c) UnFoundBug. All rights reserved.
 // </copyright>
 
-namespace UnFoundBug.LightLink
+namespace UnFoundBug.AutoSwitch
 {
     using System;
     using System.Linq;
@@ -20,17 +20,19 @@ namespace UnFoundBug.LightLink
         private readonly IMyEntity source;
 
         private bool enableAutoSwitch = false;
+
         private bool staticOnly = true;
 
+        private bool thrusters = false;
+
         /*
-         *  V0
-         *      EntityId
-         *
          *  V1
-         *      EntityId
-         *      SubGridScanning
-         *      BlockFiltering
-         *      ActiveFlags
+         *      enableAutoSwitch
+         *      staticOnly
+         *  V2
+         *      enableAutoSwitch
+         *      staticOnly
+         *      thrusters
          */
 
         /// <summary>
@@ -44,7 +46,7 @@ namespace UnFoundBug.LightLink
         }
 
         /// <summary>
-        /// Gets or sets a value representing the flags for light enable source.
+        /// Gets or sets a value indicating whether the connector should manage batteries.
         /// </summary>
         public bool AutoSwitch
         {
@@ -55,9 +57,29 @@ namespace UnFoundBug.LightLink
 
             set
             {
-                if (enableAutoSwitch != value)
+                if (this.enableAutoSwitch != value)
                 {
                     this.enableAutoSwitch = value;
+                    this.Serialise();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the connector should manage batteries.
+        /// </summary>
+        public bool ThrustersIncluded
+        {
+            get
+            {
+                return this.thrusters;
+            }
+
+            set
+            {
+                if (this.thrusters != value)
+                {
+                    this.thrusters = value;
                     this.Serialise();
                 }
             }
@@ -86,53 +108,45 @@ namespace UnFoundBug.LightLink
         /// <summary>
         /// Deserialises the entity mod storage into current properties.
         /// </summary>
-        /// <returns>Returns true if the loaded settings should be saved back to mod storage.</returns>
-        public bool Deserialise()
+        public void Deserialise()
         {
-            bool newSettingsRequired = true;
             if (this.source.Storage != null)
             {
                 if (this.source.Storage.ContainsKey(StorageGuid))
                 {
                     string dataSource = this.source.Storage.GetValue(StorageGuid);
-                    if (!dataSource.Contains(','))
+                    string[] components = dataSource.Split(',');
+                    int versionId = int.Parse(components[0]);
+                    switch (versionId)
                     {
-                        // V0 Processing, contains only target entity ID
-                        this.targetEntity = long.Parse(dataSource);
-                    }
-                    else
-                    {
-                        string[] components = dataSource.Split(',');
-                        int versionId = int.Parse(components[0]);
-                        switch (versionId)
+                        case 1:
                         {
-                            case 1:
-                                {
-                                    this.targetEntity = long.Parse(components[1]);
-                                    this.subGridScanning = bool.Parse(components[2]);
-                                    this.blockFiltering = bool.Parse(components[3]);
-                                    var rawFlag = int.Parse(components[4]);
-                                    this.flags = (LightEnableOptions)rawFlag;
+                            this.enableAutoSwitch = bool.Parse(components[1]);
+                            this.staticOnly = bool.Parse(components[2]);
+                            break;
+                        }
 
-                                    newSettingsRequired = false;
-                                    break;
-                                }
+                        case 2:
+                        {
+                            this.enableAutoSwitch = bool.Parse(components[1]);
+                            this.staticOnly = bool.Parse(components[2]);
+                            this.thrusters = bool.Parse(components[3]);
+                            break;
                         }
                     }
                 }
             }
-
-            Logging.Warn("Settings Upgrade required for " + this.source.DisplayName);
-            return newSettingsRequired;
         }
 
         private void Serialise()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("1,");
+            sb.Append("2,");
             sb.Append(this.enableAutoSwitch.ToString());
             sb.Append(",");
             sb.Append(this.staticOnly);
+            sb.Append(",");
+            sb.Append(this.thrusters);
 
             if (this.source.Storage == null)
             {

@@ -2,7 +2,7 @@
 // Copyright (c) UnFoundBug. All rights reserved.
 // </copyright>
 
-namespace UnFoundBug.LightLink
+namespace UnFoundBug.AutoSwitch
 {
     using System;
     using System.Text;
@@ -65,6 +65,8 @@ namespace UnFoundBug.LightLink
                     sbLogLine.Append(level);
                     sbLogLine.Append("\t");
                     sbLogLine.Append(log);
+                    writer.Flush();
+                    writer.Close();
                 }
             }
         }
