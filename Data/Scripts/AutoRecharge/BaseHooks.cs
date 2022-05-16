@@ -5,6 +5,7 @@
 namespace UnFoundBug.AutoSwitch
 {
     using System.Linq;
+    using Sandbox.Game.Entities;
     using Sandbox.ModAPI.Ingame;
     using VRage.Game.Components;
     using VRage.Game.ModAPI;
@@ -16,7 +17,6 @@ namespace UnFoundBug.AutoSwitch
     /// </summary>
     public class BaseHooks : MyGameLogicComponent
     {
-        private bool attached = false;
         private StorageHandler sHandler;
 
         /// <summary>
@@ -102,12 +102,25 @@ namespace UnFoundBug.AutoSwitch
                         battery.ChargeMode = ChargeMode.Recharge;
                     }
 
-                    if (this.sHandler.ThrustersIncluded)
+                    if (this.sHandler.ThrusterManagament != ThrusterMode.None)
                     {
                         var thrusters = source.GetFatBlocks<Sandbox.ModAPI.IMyThrust>();
-                        Logging.Debug("Attempting to disable " + thrusters.Count() + " thrusters.");
+                        Logging.Debug("Attempting to manage " + thrusters.Count() + " thrusters.");
                         foreach (var thrust in thrusters)
                         {
+                            var castThrust = (MyThrust)thrust;
+                            bool isH2 = castThrust.FuelConverterDefinition.FuelId.SubtypeId == "Hydrogen";
+
+                            if (this.sHandler.ThrusterManagament == ThrusterMode.ElectricOnly && isH2)
+                            {
+                                continue;
+                            }
+
+                            if (this.sHandler.ThrusterManagament == ThrusterMode.HydrogenOnly && !isH2)
+                            {
+                                continue;
+                            }
+
                             thrust.Enabled = false;
                         }
                     }
@@ -125,12 +138,25 @@ namespace UnFoundBug.AutoSwitch
                     battery.ChargeMode = ChargeMode.Auto;
                 }
 
-                if (this.sHandler.ThrustersIncluded)
+                if (this.sHandler.ThrusterManagament != ThrusterMode.None)
                 {
                     var thrusters = this.TypedEntity.CubeGrid.GetFatBlocks<Sandbox.ModAPI.IMyThrust>();
-                    Logging.Debug("Attempting to enable " + thrusters.Count() + " thrusters.");
+                    Logging.Debug("Attempting to manage " + thrusters.Count() + " thrusters.");
                     foreach (var thrust in thrusters)
                     {
+                        var castThrust = (MyThrust)thrust;
+                        bool isH2 = castThrust.FuelConverterDefinition.FuelId.SubtypeId == "Hydrogen";
+
+                        if (this.sHandler.ThrusterManagament == ThrusterMode.ElectricOnly && isH2)
+                        {
+                            continue;
+                        }
+
+                        if (this.sHandler.ThrusterManagament == ThrusterMode.HydrogenOnly && !isH2)
+                        {
+                            continue;
+                        }
+
                         thrust.Enabled = true;
                     }
                 }

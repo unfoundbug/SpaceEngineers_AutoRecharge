@@ -4,6 +4,7 @@
 
 namespace UnFoundBug.AutoSwitch
 {
+    using System.Linq;
     using Sandbox.ModAPI;
     using Sandbox.ModAPI.Interfaces.Terminal;
     using VRage.ModAPI;
@@ -18,7 +19,7 @@ namespace UnFoundBug.AutoSwitch
         private static IMyTerminalControlSeparator separator;
         private static IMyTerminalControlOnOffSwitch chargeOnConnectToggle;
         private static IMyTerminalControlOnOffSwitch staticOnlyToggle;
-        private static IMyTerminalControlOnOffSwitch includeThrustersToggle;
+        private static IMyTerminalControlListbox thrusterControl;
 
         /// <summary>
         /// Attach controls to terminal menus.
@@ -80,29 +81,64 @@ namespace UnFoundBug.AutoSwitch
             staticOnlyToggle.Visible = block => !block.CubeGrid.IsStatic;
             Logging.Debug("FilterListOnOff initialised");
 
-            includeThrustersToggle = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlOnOffSwitch, IMyShipConnector>("autoswitch_thrusters");
-            includeThrustersToggle.Title = MyStringId.GetOrCompute("Thruster Management");
-            includeThrustersToggle.Tooltip = MyStringId.GetOrCompute("If enabled, thrusters will also Disable on connection, and re-enable on disconnection");
-            includeThrustersToggle.OnText = MyStringId.GetOrCompute("Enabled");
-            includeThrustersToggle.OffText = MyStringId.GetOrCompute("Disabled");
-            includeThrustersToggle.Getter = block =>
+            thrusterControl = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlListbox, IMyShipConnector>("autocharge_thrustmode");
+            thrusterControl.Title = MyStringId.GetOrCompute("Thruster Control");
+            thrusterControl.Tooltip = MyStringId.GetOrCompute("Should the connector also control thrusters?");
+            thrusterControl.Multiselect = false;
+            thrusterControl.VisibleRowsCount = 4;
+            thrusterControl.ItemSelected = (block, selected) =>
             {
                 StorageHandler handler = new StorageHandler(block);
-                return handler.ThrustersIncluded;
-            };
-            includeThrustersToggle.Setter = (block, value) =>
-            {
-                StorageHandler handler = new StorageHandler(block);
-                handler.ThrustersIncluded = value;
+                handler.ThrusterManagament = (ThrusterMode)selected.First().UserData;
                 block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
             };
+            thrusterControl.ListContent = (block, items, selected) =>
+            {
+                // Logging.Instance.WriteLine("List content building!");
+                StorageHandler storage = new StorageHandler(block);
 
-            includeThrustersToggle.Visible = block => !block.CubeGrid.IsStatic;
+                items.Add(new MyTerminalControlListBoxItem(
+                    MyStringId.GetOrCompute("None"),
+                    MyStringId.GetOrCompute("No thruster management"),
+                    ThrusterMode.None));
+                if (storage.ThrusterManagament == ThrusterMode.None)
+                {
+                    selected.Add(items.Last());
+                }
+
+                items.Add(new MyTerminalControlListBoxItem(
+                    MyStringId.GetOrCompute("Electric"),
+                    MyStringId.GetOrCompute("Atmospheric and Ion thrusters"),
+                    ThrusterMode.ElectricOnly));
+                if (storage.ThrusterManagament == ThrusterMode.ElectricOnly)
+                {
+                    selected.Add(items.Last());
+                }
+
+                items.Add(new MyTerminalControlListBoxItem(
+                    MyStringId.GetOrCompute("Hydrogen"),
+                    MyStringId.GetOrCompute("H2 thrusters only"),
+                    ThrusterMode.HydrogenOnly));
+                if (storage.ThrusterManagament == ThrusterMode.HydrogenOnly)
+                {
+                    selected.Add(items.Last());
+                }
+
+                items.Add(new MyTerminalControlListBoxItem(
+                    MyStringId.GetOrCompute("All"),
+                    MyStringId.GetOrCompute("ALL attached thrusters."),
+                    ThrusterMode.All));
+                if (storage.ThrusterManagament == ThrusterMode.All)
+                {
+                    selected.Add(items.Last());
+                }
+            };
+            thrusterControl.Visible = block => !block.CubeGrid.IsStatic;
 
             MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(separator);
             MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(chargeOnConnectToggle);
             MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(staticOnlyToggle);
-            MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(includeThrustersToggle);
+            MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(thrusterControl);
             Logging.Debug("Controls Registered");
         }
     }
