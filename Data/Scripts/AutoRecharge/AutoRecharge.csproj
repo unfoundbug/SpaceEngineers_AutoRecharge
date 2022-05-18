@@ -72,6 +72,7 @@
     <Compile Include="ConnectorHooks.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="StorageHandler.cs" />
+    <Compile Include="TankMode.cs" />
     <Compile Include="ThrusterMode.cs" />
   </ItemGroup>
   <ItemGroup>

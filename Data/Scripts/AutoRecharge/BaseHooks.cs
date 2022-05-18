@@ -124,6 +124,28 @@ namespace UnFoundBug.AutoSwitch
                             thrust.Enabled = false;
                         }
                     }
+
+                    if (this.sHandler.TankSetting != TankMode.None)
+                    {
+                        var tanks = source.GetFatBlocks<Sandbox.ModAPI.IMyGasTank>();
+                        Logging.Debug("Attempting to manage " + tanks.Count() + " tanks.");
+                        foreach (var tank in tanks)
+                        {
+                            if (tank.BlockDefinition.SubtypeId.Contains("Hydro")
+                            &&
+                            this.sHandler.TankSetting != TankMode.OxygenOnly)
+                            {
+                                tank.Stockpile = true;
+                            }
+
+                            if (!tank.BlockDefinition.SubtypeId.Contains("Hydro")
+                                &&
+                                this.sHandler.TankSetting != TankMode.HydrogenOnly)
+                            {
+                                tank.Stockpile = true;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -158,6 +180,28 @@ namespace UnFoundBug.AutoSwitch
                         }
 
                         thrust.Enabled = true;
+                    }
+                }
+
+                if (this.sHandler.TankSetting != TankMode.None)
+                {
+                    var tanks = this.TypedEntity.CubeGrid.GetFatBlocks<Sandbox.ModAPI.IMyGasTank>();
+                    Logging.Debug("Attempting to manage " + tanks.Count() + " tanks.");
+                    foreach (var tank in tanks)
+                    {
+                        if (tank.BlockDefinition.SubtypeId.Contains("Hydro")
+                            &&
+                            this.sHandler.TankSetting != TankMode.OxygenOnly)
+                        {
+                            tank.Stockpile = false;
+                        }
+
+                        if (!tank.BlockDefinition.SubtypeId.Contains("Hydro")
+                            &&
+                            this.sHandler.TankSetting != TankMode.HydrogenOnly)
+                        {
+                            tank.Stockpile = false;
+                        }
                     }
                 }
             }

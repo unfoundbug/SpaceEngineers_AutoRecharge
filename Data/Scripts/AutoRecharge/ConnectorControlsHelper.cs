@@ -20,6 +20,7 @@ namespace UnFoundBug.AutoSwitch
         private static IMyTerminalControlOnOffSwitch chargeOnConnectToggle;
         private static IMyTerminalControlOnOffSwitch staticOnlyToggle;
         private static IMyTerminalControlListbox thrusterControl;
+        private static IMyTerminalControlListbox tankControl;
 
         /// <summary>
         /// Attach controls to terminal menus.
@@ -135,10 +136,65 @@ namespace UnFoundBug.AutoSwitch
             };
             thrusterControl.Visible = block => !block.CubeGrid.IsStatic;
 
+            tankControl = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlListbox, IMyShipConnector>("autocharge_tanktmode");
+            tankControl.Title = MyStringId.GetOrCompute("Tank Control");
+            tankControl.Tooltip = MyStringId.GetOrCompute("Should the connector also control tanks?");
+            tankControl.Multiselect = false;
+            tankControl.VisibleRowsCount = 4;
+            tankControl.ItemSelected = (block, selected) =>
+            {
+                StorageHandler handler = new StorageHandler(block);
+                handler.TankSetting = (TankMode)selected.First().UserData;
+                block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+            };
+            tankControl.ListContent = (block, items, selected) =>
+            {
+                // Logging.Instance.WriteLine("List content building!");
+                StorageHandler storage = new StorageHandler(block);
+
+                items.Add(new MyTerminalControlListBoxItem(
+                    MyStringId.GetOrCompute("None"),
+                    MyStringId.GetOrCompute("No tank management"),
+                    TankMode.None));
+                if (storage.TankSetting == TankMode.None)
+                {
+                    selected.Add(items.Last());
+                }
+
+                items.Add(new MyTerminalControlListBoxItem(
+                    MyStringId.GetOrCompute("Oxygen"),
+                    MyStringId.GetOrCompute("O2 tanks only"),
+                    TankMode.OxygenOnly));
+                if (storage.TankSetting == TankMode.OxygenOnly)
+                {
+                    selected.Add(items.Last());
+                }
+
+                items.Add(new MyTerminalControlListBoxItem(
+                    MyStringId.GetOrCompute("Hydrogen"),
+                    MyStringId.GetOrCompute("H2 tanks only"),
+                    TankMode.HydrogenOnly));
+                if (storage.TankSetting == TankMode.HydrogenOnly)
+                {
+                    selected.Add(items.Last());
+                }
+
+                items.Add(new MyTerminalControlListBoxItem(
+                    MyStringId.GetOrCompute("All"),
+                    MyStringId.GetOrCompute("All tanks"),
+                    TankMode.All));
+                if (storage.TankSetting == TankMode.All)
+                {
+                    selected.Add(items.Last());
+                }
+            };
+            tankControl.Visible = block => !block.CubeGrid.IsStatic;
+
             MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(separator);
             MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(chargeOnConnectToggle);
             MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(staticOnlyToggle);
             MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(thrusterControl);
+            MyAPIGateway.TerminalControls.AddControl<IMyShipConnector>(tankControl);
             Logging.Debug("Controls Registered");
         }
     }

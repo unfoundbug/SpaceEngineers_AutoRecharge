@@ -24,6 +24,7 @@ namespace UnFoundBug.AutoSwitch
         private bool staticOnly = true;
 
         private ThrusterMode thrusters = ThrusterMode.None;
+        private TankMode tankMode = TankMode.None;
 
         /*
          *  V1
@@ -37,7 +38,11 @@ namespace UnFoundBug.AutoSwitch
          *      enableAutoSwitch
          *      staticOnly
          *      thrusterMode
-         *
+         *  V4
+         *      enableAutoSwitch
+         *      staticOnly
+         *      thrusterMode
+         *      tankMode
         */
 
         /// <summary>
@@ -85,6 +90,26 @@ namespace UnFoundBug.AutoSwitch
                 if (this.thrusters != value)
                 {
                     this.thrusters = value;
+                    this.Serialise();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the connector should manage batteries.
+        /// </summary>
+        public TankMode TankSetting
+        {
+            get
+            {
+                return this.tankMode;
+            }
+
+            set
+            {
+                if (this.tankMode != value)
+                {
+                    this.tankMode = value;
                     this.Serialise();
                 }
             }
@@ -154,6 +179,15 @@ namespace UnFoundBug.AutoSwitch
                             this.thrusters = (ThrusterMode)Enum.Parse(typeof(ThrusterMode), components[3]);
                             break;
                         }
+
+                        case 4:
+                        {
+                            this.enableAutoSwitch = bool.Parse(components[1]);
+                            this.staticOnly = bool.Parse(components[2]);
+                            this.thrusters = (ThrusterMode)Enum.Parse(typeof(ThrusterMode), components[3]);
+                            this.tankMode = (TankMode)Enum.Parse(typeof(TankMode), components[4]);
+                            break;
+                        }
                     }
                 }
             }
@@ -162,12 +196,14 @@ namespace UnFoundBug.AutoSwitch
         private void Serialise()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("3,");
+            sb.Append("4,");
             sb.Append(this.enableAutoSwitch.ToString());
             sb.Append(",");
             sb.Append(this.staticOnly);
             sb.Append(",");
             sb.Append(this.thrusters);
+            sb.Append(",");
+            sb.Append(this.tankMode);
 
             if (this.source.Storage == null)
             {

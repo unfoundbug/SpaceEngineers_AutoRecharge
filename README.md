@@ -1,6 +1,6 @@
 Space Engineers Workshop;
 Unfoundbug AutoRecharge
-https://steamcommunity.com/sharedfiles/filedetails/?id=2806143877
+https://steamcommunity.com/sharedfiles/filedetails/?id=2808241923
 
 ======================
 
@@ -12,6 +12,10 @@ Developed by UnFoundBug.
 		Static restriction only switches the batteries to recharge if the connected grid is static.
 		
 ======================
+V0.0.3:
+	Added support for gas tank stockpiling
+		Connectors can now automatically set/clear stockpiling of gasses on connection to other grids.
+			None,O2,H2 and All tank filter options available.
 V0.0.2:
 	Fixed issue with changing configuration during gameplay
 	Added thruster mode configuration
