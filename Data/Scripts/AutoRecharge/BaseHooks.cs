@@ -24,7 +24,6 @@ namespace UnFoundBug.AutoSwitch
         /// </summary>
         public BaseHooks()
         {
-            ConnectorControlsHelper.AttachControls();
         }
 
         private Sandbox.ModAPI.IMyShipConnector TypedEntity => (Sandbox.ModAPI.IMyShipConnector)this.Entity;
@@ -39,14 +38,13 @@ namespace UnFoundBug.AutoSwitch
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
-            this.sHandler = new StorageHandler(this.Entity);
+            this.sHandler = SessionShim.Instance.Cache.GetHandler(this.Entity);
             this.AttachEvents();
         }
 
         /// <inheritdoc/>
         public override void UpdateOnceBeforeFrame()
         {
-            this.sHandler = new StorageHandler(this.Entity);
             this.TypedEntity_IsWorkingChanged(null);
             base.UpdateOnceBeforeFrame();
         }
