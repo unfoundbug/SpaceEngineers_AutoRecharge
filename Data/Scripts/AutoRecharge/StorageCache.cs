@@ -15,9 +15,8 @@ namespace UnFoundBug.AutoSwitch
     /// <summary>
     /// Caches instances of the storage handler to prevent repeated deserialisation errors.
     /// </summary>
-    public class StorageCache
+    public class StorageCache : IDisposable
     {
-        private static StorageCache instance;
         private Dictionary<long, StorageHandler> internalStore = new Dictionary<long, StorageHandler>();
 
         /// <summary>
@@ -35,14 +34,10 @@ namespace UnFoundBug.AutoSwitch
             return this.internalStore[entity.EntityId];
         }
 
-        public static StorageCache Instance 
+        /// <inheritdoc/>
+        public void Dispose()
         {
-            get
-            {
-                if (instance == null)
-                    instance = new StorageCache();
-                return instance;
-            }
+            this.internalStore.Clear();
         }
     }
 }

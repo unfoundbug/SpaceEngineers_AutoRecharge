@@ -71,6 +71,7 @@
     <Compile Include="ConnectorControlsHelper.cs" />
     <Compile Include="ConnectorHooks.cs" />
     <Compile Include="Logging.cs" />
+    <Compile Include="SessionShim.cs" />
     <Compile Include="StorageCache.cs" />
     <Compile Include="StorageHandler.cs" />
     <Compile Include="ThrusterMode.cs" />

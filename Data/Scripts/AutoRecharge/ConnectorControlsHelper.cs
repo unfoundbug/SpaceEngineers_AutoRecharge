@@ -15,7 +15,6 @@ namespace UnFoundBug.AutoSwitch
     /// </summary>
     public static class ConnectorControlsHelper
     {
-        private static bool controlsInit = false;
         private static IMyTerminalControlSeparator separator;
         private static IMyTerminalControlOnOffSwitch chargeOnConnectToggle;
         private static IMyTerminalControlOnOffSwitch staticOnlyToggle;
@@ -26,16 +25,6 @@ namespace UnFoundBug.AutoSwitch
         /// </summary>
         public static void AttachControls()
         {
-            if (!controlsInit)
-            {
-                Logging.Debug("Initialising Controls");
-                controlsInit = true;
-            }
-            else
-            {
-                return;
-            }
-
             separator = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSeparator, IMyShipConnector>("autoswitch_seperator");
             separator.Enabled = (lb) => true;
             separator.Visible = block => !block.CubeGrid.IsStatic;
@@ -49,12 +38,12 @@ namespace UnFoundBug.AutoSwitch
             chargeOnConnectToggle.Tooltip = MyStringId.GetOrCompute("When enabled, connecting will cause ALL bateries on this grid to change to recharge");
             chargeOnConnectToggle.Getter = block =>
             {
-                StorageHandler handler = StorageCache.Instance.GetHandler(block);
+                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
                 return handler.AutoSwitch;
             };
             chargeOnConnectToggle.Setter = (block, value) =>
             {
-                StorageHandler handler = StorageCache.Instance.GetHandler(block);
+                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
                 handler.AutoSwitch = value;
                 block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
             };
@@ -68,12 +57,12 @@ namespace UnFoundBug.AutoSwitch
             staticOnlyToggle.OffText = MyStringId.GetOrCompute("Disabled");
             staticOnlyToggle.Getter = block =>
             {
-                StorageHandler handler = StorageCache.Instance.GetHandler(block);
+                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
                 return handler.StaticOnly;
             };
             staticOnlyToggle.Setter = (block, value) =>
             {
-                StorageHandler handler = StorageCache.Instance.GetHandler(block);
+                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
                 handler.StaticOnly = value;
                 block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
             };
@@ -88,14 +77,14 @@ namespace UnFoundBug.AutoSwitch
             thrusterControl.VisibleRowsCount = 4;
             thrusterControl.ItemSelected = (block, selected) =>
             {
-                StorageHandler handler = StorageCache.Instance.GetHandler(block);
+                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
                 handler.ThrusterManagament = (ThrusterMode)selected.First().UserData;
                 block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
             };
             thrusterControl.ListContent = (block, items, selected) =>
             {
                 // Logging.Instance.WriteLine("List content building!");
-                StorageHandler storage = StorageCache.Instance.GetHandler(block);
+                StorageHandler storage = SessionShim.Instance.Cache.GetHandler(block);
 
                 items.Add(new MyTerminalControlListBoxItem(
                     MyStringId.GetOrCompute("None"),
