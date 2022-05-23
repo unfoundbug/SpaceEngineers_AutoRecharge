@@ -39,14 +39,13 @@ namespace UnFoundBug.AutoSwitch
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
-            this.sHandler = new StorageHandler(this.Entity);
+            this.sHandler = StorageCache.Instance.GetHandler(this.Entity);
             this.AttachEvents();
         }
 
         /// <inheritdoc/>
         public override void UpdateOnceBeforeFrame()
         {
-            this.sHandler = new StorageHandler(this.Entity);
             this.TypedEntity_IsWorkingChanged(null);
             base.UpdateOnceBeforeFrame();
         }
