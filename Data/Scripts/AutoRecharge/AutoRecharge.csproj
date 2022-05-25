@@ -72,8 +72,6 @@
     <Compile Include="ConnectorHooks.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="SessionShim.cs" />
-    <Compile Include="StorageCache.cs" />
-    <Compile Include="StorageHandler.cs" />
     <Compile Include="TankMode.cs" />
     <Compile Include="ThrusterMode.cs" />
   </ItemGroup>
@@ -91,7 +89,17 @@
   <PropertyGroup>
     <PostBuildEvent>pushd $(ProjectDir)..\..\..\
 powershell -executionpolicy unrestricted -File ".\PrepPublish.ps1"
-popd</PostBuildEvent>
+popd
+if $(ConfigurationName) == Debug (
+echo %25Space_Engineers_Path%25\SEWorkshopTool.exe  push --mods %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge --message=%25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge\README.md --visibility Private
+robocopy /MIR %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge %25AppData%25\Roaming\SpaceEngineersDedicated\content\244850\2812031542
+robocopy /MIR %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge D:\SteamLibrary\steamapps\workshop\content\244850\2812031542
+exit 0
+) ELSE ( 
+Copy $(SolutionDir)..\..\..\modinfo_Release.smbi %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge --message=%25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge\modinfo.smbi
+%25Space_Engineers_Path%25 release upload
+) 
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.  
        Other similar extension points exist, see Microsoft.Common.targets. 

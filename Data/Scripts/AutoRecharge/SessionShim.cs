@@ -4,13 +4,12 @@
 
 namespace UnFoundBug.AutoSwitch
 {
-    using UnFoundBug.AutoSwitch;
     using VRage.Game.Components;
 
     /// <summary>
     /// Session Based instance.
     /// </summary>
-    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation | MyUpdateOrder.AfterSimulation)]
+    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     public class SessionShim : MySessionComponentBase
     {
         /// <summary>
@@ -18,30 +17,33 @@ namespace UnFoundBug.AutoSwitch
         /// </summary>
         public static SessionShim Instance;
 
-        private readonly StorageCache sCache = new StorageCache();
-
-        /// <summary>
-        /// Gets the storage cache.
-        /// </summary>
-        public StorageCache Cache => this.sCache;
+        private bool controlsInit = false;
 
         /// <inheritdoc/>
         public override void LoadData()
         {
             Instance = this;
+            base.LoadData();
         }
 
         /// <inheritdoc/>
         public override void BeforeStart()
         {
             base.BeforeStart();
-            ConnectorControlsHelper.AttachControls();
+        }
+
+        public void AttemptControlsInit()
+        {
+            if (!this.controlsInit)
+            {
+                this.controlsInit = true;
+                ConnectorControlsHelper.AttachControls();
+            }
         }
 
         /// <inheritdoc/>
         protected override void UnloadData()
         {
-            this.sCache.Dispose();
             Instance = null;
         }
     }

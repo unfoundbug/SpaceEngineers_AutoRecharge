@@ -39,14 +39,21 @@ namespace UnFoundBug.AutoSwitch
             chargeOnConnectToggle.Tooltip = MyStringId.GetOrCompute("When enabled, connecting will cause ALL bateries on this grid to change to recharge");
             chargeOnConnectToggle.Getter = block =>
             {
-                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
-                return handler.AutoSwitch;
+                if (block == null || block.GameLogic == null)
+                {
+                    return false;
+                }
+
+                var logic = block.GameLogic.GetAs<BaseHooks>();
+                return logic?.SwitchingEnabled ?? false;
             };
             chargeOnConnectToggle.Setter = (block, value) =>
             {
-                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
-                handler.AutoSwitch = value;
-                block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+                var logic = block.GameLogic.GetAs<BaseHooks>();
+                if (logic != null)
+                {
+                    logic.SwitchingEnabled = value;
+                }
             };
             chargeOnConnectToggle.Visible = block => !block.CubeGrid.IsStatic;
             Logging.Debug("SubGridOnOff initialised");
@@ -58,14 +65,21 @@ namespace UnFoundBug.AutoSwitch
             staticOnlyToggle.OffText = MyStringId.GetOrCompute("Disabled");
             staticOnlyToggle.Getter = block =>
             {
-                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
-                return handler.StaticOnly;
+                if (block == null || block.GameLogic == null)
+                {
+                    return false;
+                }
+
+                var logic = block.GameLogic.GetAs<BaseHooks>();
+                return logic?.StaticOnly ?? false;
             };
             staticOnlyToggle.Setter = (block, value) =>
             {
-                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
-                handler.StaticOnly = value;
-                block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+                var logic = block.GameLogic.GetAs<BaseHooks>();
+                if (logic != null)
+                {
+                    logic.StaticOnly = value;
+                }
             };
 
             staticOnlyToggle.Visible = block => !block.CubeGrid.IsStatic;
@@ -78,49 +92,53 @@ namespace UnFoundBug.AutoSwitch
             thrusterControl.VisibleRowsCount = 4;
             thrusterControl.ItemSelected = (block, selected) =>
             {
-                StorageHandler handler = SessionShim.Instance.Cache.GetHandler(block);
-                handler.ThrusterManagament = (ThrusterMode)selected.First().UserData;
-                block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+                var logic = block.GameLogic.GetAs<BaseHooks>();
+                if (logic != null)
+                {
+                    logic.ThrustMode = (ThrusterMode)selected.First().UserData;
+                }
             };
             thrusterControl.ListContent = (block, items, selected) =>
             {
                 // Logging.Instance.WriteLine("List content building!");
-                StorageHandler storage = SessionShim.Instance.Cache.GetHandler(block);
-
-                items.Add(new MyTerminalControlListBoxItem(
-                    MyStringId.GetOrCompute("None"),
-                    MyStringId.GetOrCompute("No thruster management"),
-                    ThrusterMode.None));
-                if (storage.ThrusterManagament == ThrusterMode.None)
+                var logic = block.GameLogic.GetAs<BaseHooks>();
+                if (logic != null)
                 {
-                    selected.Add(items.Last());
-                }
+                    items.Add(new MyTerminalControlListBoxItem(
+                        MyStringId.GetOrCompute("None"),
+                        MyStringId.GetOrCompute("No thruster management"),
+                        ThrusterMode.None));
+                    if (logic.ThrustMode == ThrusterMode.None)
+                    {
+                        selected.Add(items.Last());
+                    }
 
-                items.Add(new MyTerminalControlListBoxItem(
-                    MyStringId.GetOrCompute("Electric"),
-                    MyStringId.GetOrCompute("Atmospheric and Ion thrusters"),
-                    ThrusterMode.ElectricOnly));
-                if (storage.ThrusterManagament == ThrusterMode.ElectricOnly)
-                {
-                    selected.Add(items.Last());
-                }
+                    items.Add(new MyTerminalControlListBoxItem(
+                        MyStringId.GetOrCompute("Electric"),
+                        MyStringId.GetOrCompute("Atmospheric and Ion thrusters"),
+                        ThrusterMode.ElectricOnly));
+                    if (logic.ThrustMode == ThrusterMode.ElectricOnly)
+                    {
+                        selected.Add(items.Last());
+                    }
 
-                items.Add(new MyTerminalControlListBoxItem(
-                    MyStringId.GetOrCompute("Hydrogen"),
-                    MyStringId.GetOrCompute("H2 thrusters only"),
-                    ThrusterMode.HydrogenOnly));
-                if (storage.ThrusterManagament == ThrusterMode.HydrogenOnly)
-                {
-                    selected.Add(items.Last());
-                }
+                    items.Add(new MyTerminalControlListBoxItem(
+                        MyStringId.GetOrCompute("Hydrogen"),
+                        MyStringId.GetOrCompute("H2 thrusters only"),
+                        ThrusterMode.HydrogenOnly));
+                    if (logic.ThrustMode == ThrusterMode.HydrogenOnly)
+                    {
+                        selected.Add(items.Last());
+                    }
 
-                items.Add(new MyTerminalControlListBoxItem(
-                    MyStringId.GetOrCompute("All"),
-                    MyStringId.GetOrCompute("ALL attached thrusters."),
-                    ThrusterMode.All));
-                if (storage.ThrusterManagament == ThrusterMode.All)
-                {
-                    selected.Add(items.Last());
+                    items.Add(new MyTerminalControlListBoxItem(
+                        MyStringId.GetOrCompute("All"),
+                        MyStringId.GetOrCompute("ALL attached thrusters."),
+                        ThrusterMode.All));
+                    if (logic.ThrustMode == ThrusterMode.All)
+                    {
+                        selected.Add(items.Last());
+                    }
                 }
             };
             thrusterControl.Visible = block => !block.CubeGrid.IsStatic;
@@ -132,49 +150,52 @@ namespace UnFoundBug.AutoSwitch
             tankControl.VisibleRowsCount = 4;
             tankControl.ItemSelected = (block, selected) =>
             {
-                StorageHandler handler = new StorageHandler(block);
-                handler.TankSetting = (TankMode)selected.First().UserData;
-                block.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+                var logic = block.GameLogic.GetAs<BaseHooks>();
+                if (logic != null)
+                {
+                    logic.TankSetting = (TankMode)selected.First().UserData;
+                }
             };
             tankControl.ListContent = (block, items, selected) =>
             {
-                // Logging.Instance.WriteLine("List content building!");
-                StorageHandler storage = new StorageHandler(block);
-
-                items.Add(new MyTerminalControlListBoxItem(
-                    MyStringId.GetOrCompute("None"),
-                    MyStringId.GetOrCompute("No tank management"),
-                    TankMode.None));
-                if (storage.TankSetting == TankMode.None)
+                var logic = block.GameLogic.GetAs<BaseHooks>();
+                if (logic != null)
                 {
-                    selected.Add(items.Last());
-                }
+                    items.Add(new MyTerminalControlListBoxItem(
+                        MyStringId.GetOrCompute("None"),
+                        MyStringId.GetOrCompute("No tank management"),
+                        TankMode.None));
+                    if (logic.TankSetting == TankMode.None)
+                    {
+                        selected.Add(items.Last());
+                    }
 
-                items.Add(new MyTerminalControlListBoxItem(
-                    MyStringId.GetOrCompute("Oxygen"),
-                    MyStringId.GetOrCompute("O2 tanks only"),
-                    TankMode.OxygenOnly));
-                if (storage.TankSetting == TankMode.OxygenOnly)
-                {
-                    selected.Add(items.Last());
-                }
+                    items.Add(new MyTerminalControlListBoxItem(
+                        MyStringId.GetOrCompute("Oxygen"),
+                        MyStringId.GetOrCompute("O2 tanks only"),
+                        TankMode.OxygenOnly));
+                    if (logic.TankSetting == TankMode.OxygenOnly)
+                    {
+                        selected.Add(items.Last());
+                    }
 
-                items.Add(new MyTerminalControlListBoxItem(
-                    MyStringId.GetOrCompute("Hydrogen"),
-                    MyStringId.GetOrCompute("H2 tanks only"),
-                    TankMode.HydrogenOnly));
-                if (storage.TankSetting == TankMode.HydrogenOnly)
-                {
-                    selected.Add(items.Last());
-                }
+                    items.Add(new MyTerminalControlListBoxItem(
+                        MyStringId.GetOrCompute("Hydrogen"),
+                        MyStringId.GetOrCompute("H2 tanks only"),
+                        TankMode.HydrogenOnly));
+                    if (logic.TankSetting == TankMode.HydrogenOnly)
+                    {
+                        selected.Add(items.Last());
+                    }
 
-                items.Add(new MyTerminalControlListBoxItem(
-                    MyStringId.GetOrCompute("All"),
-                    MyStringId.GetOrCompute("All tanks"),
-                    TankMode.All));
-                if (storage.TankSetting == TankMode.All)
-                {
-                    selected.Add(items.Last());
+                    items.Add(new MyTerminalControlListBoxItem(
+                        MyStringId.GetOrCompute("All"),
+                        MyStringId.GetOrCompute("All tanks"),
+                        TankMode.All));
+                    if (logic.TankSetting == TankMode.All)
+                    {
+                        selected.Add(items.Last());
+                    }
                 }
             };
             tankControl.Visible = block => !block.CubeGrid.IsStatic;
