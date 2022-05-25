@@ -10,7 +10,7 @@ namespace UnFoundBug.AutoSwitch
     /// <summary>
     /// Hooks for MyObjectBuilder_InteriorLight, also impacts LightPanel.
     /// </summary>
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_ShipConnector), true)]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_ShipConnector), false)]
     public class ConnectorHooks : BaseHooks
     {
     }

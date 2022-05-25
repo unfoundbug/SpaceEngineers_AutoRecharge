@@ -26,12 +26,9 @@ namespace UnFoundBug.AutoSwitch
             base.LoadData();
         }
 
-        /// <inheritdoc/>
-        public override void BeforeStart()
-        {
-            base.BeforeStart();
-        }
-
+        /// <summary>
+        /// Attempt to bind connector controls to the UI.
+        /// </summary>
         public void AttemptControlsInit()
         {
             if (!this.controlsInit)

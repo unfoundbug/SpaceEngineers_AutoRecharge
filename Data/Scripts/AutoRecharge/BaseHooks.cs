@@ -24,27 +24,26 @@ namespace UnFoundBug.AutoSwitch
     /// <summary>
     /// Base handling class for common behaviour across MyObjectBuilder_ types.
     /// </summary>
-    public class BaseHooks : MyGameLogicComponent, IMyEventProxy
+    public class BaseHooks : MyGameLogicComponent
     {
         private static readonly Guid StorageGuid = new Guid("{D249368C-3008-4BA0-934E-90F66A146061}");
         private bool responsibleForUpdates = true;
 
         private MySync<bool, SyncDirection.BothWays> syncAutoSwitch = null;
         private MySync<bool, SyncDirection.BothWays> syncStaticOnly = null;
-        private MySync<ThrusterMode, SyncDirection.BothWays> syncThrusters = null;
-        private MySync<TankMode, SyncDirection.BothWays> syncTankMode = null;
+        private MySync<int, SyncDirection.BothWays> syncThrusters = null;
+        private MySync<int, SyncDirection.BothWays> syncTankMode = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseHooks"/> class.
         /// </summary>
         public BaseHooks()
         {
-            if (MyAPIGateway.Multiplayer.MultiplayerActive && !MyAPIGateway.Multiplayer.IsServer)
-            {
-                this.responsibleForUpdates = false;
-            }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the connector auto-switches relevant blocks.
+        /// </summary>
         public bool SwitchingEnabled
         {
             get
@@ -58,40 +57,51 @@ namespace UnFoundBug.AutoSwitch
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the connector should only switch to recharge when connected to a static grid.
+        /// </summary>
         public bool StaticOnly
         {
             get
             {
                 return this.syncStaticOnly.Value;
             }
+
             set
             {
                 this.syncStaticOnly.Value = value;
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the connector should also enable/disable thrusters.
+        /// </summary>
         public ThrusterMode ThrustMode
         {
             get
             {
-                return this.syncThrusters.Value;
+                return (ThrusterMode)this.syncThrusters.Value;
             }
+
             set
             {
-                this.syncThrusters.Value = value;
+                this.syncThrusters.Value = (int)value;
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value representing which tanks should be changed to refill when connected to another grid.
+        /// </summary>
         public TankMode TankSetting
         {
             get
             {
-                return this.syncTankMode.Value;
+                return (TankMode)this.syncTankMode.Value;
             }
 
             set
             {
-                this.syncTankMode.Value = value;
+                this.syncTankMode.Value = (int)value;
             }
         }
 
@@ -100,33 +110,22 @@ namespace UnFoundBug.AutoSwitch
         /// <inheritdoc/>
         public override void Close()
         {
-            this.DetachEvents();
+            //this.DetachEvents();
         }
 
         /// <inheritdoc/>
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
-            this.AttachEvents();
-            SessionShim.Instance.AttemptControlsInit();
-
-            if (MyAPIGateway.Multiplayer.IsServer)
-            {
-                this.Deserialise();
-                this.Serialise();
-            }
+            //this.AttachEvents();
+            //this.Deserialise();
+            //SessionShim.Instance.AttemptControlsInit();
         }
 
         /// <inheritdoc/>
-        public override void UpdateOnceBeforeFrame()
-        {
-            this.TypedEntity_IsWorkingChanged(null);
-            base.UpdateOnceBeforeFrame();
-        }
-
         public override bool IsSerialized()
         {
-            this.Serialise();
+            //this.Serialise();
             return base.IsSerialized();
         }
 
@@ -137,31 +136,34 @@ namespace UnFoundBug.AutoSwitch
                 this.TypedEntity.IsWorkingChanged += this.TypedEntity_IsWorkingChanged;
             }
 
-            this.syncTankMode.ValueChanged += this.SyncTankModeOnValueChanged;
+            this.syncTankMode.ValueChanged += this.SyncTankMode_ValueChanged;
             this.syncAutoSwitch.ValueChanged += this.SyncAutoSwitch_ValueChanged;
             this.syncStaticOnly.ValueChanged += this.SyncStaticOnly_ValueChanged;
             this.syncThrusters.ValueChanged += this.SyncThrusters_ValueChanged;
         }
 
-        private void SyncThrusters_ValueChanged(MySync<ThrusterMode, SyncDirection.BothWays> obj)
+        private void SyncThrusters_ValueChanged(MySync<int, SyncDirection.BothWays> obj)
         {
-                this.Serialise();
+            MyLog.Default.WriteLineAndConsole($"AutoRecharge SyncThrusters_ValueChanged: {this.Entity.EntityId} is now {obj.Value}");
+            this.TypedEntity_IsWorkingChanged(null);
         }
 
         private void SyncStaticOnly_ValueChanged(MySync<bool, SyncDirection.BothWays> obj)
         {
-                this.Serialise();
+            MyLog.Default.WriteLineAndConsole($"AutoRecharge SyncStaticOnly_ValueChanged: {this.Entity.EntityId} is now {obj.Value}");
+            this.TypedEntity_IsWorkingChanged(null);
         }
 
         private void SyncAutoSwitch_ValueChanged(MySync<bool, SyncDirection.BothWays> obj)
         {
-            MyLog.Default.WriteLineAndConsole($"AutoRecharge: {this.Entity.EntityId} is now {obj.Value}");
-            this.Serialise();
+            MyLog.Default.WriteLineAndConsole($"AutoRecharge SyncAutoSwitch_ValueChanged: {this.Entity.EntityId} is now {obj.Value}");
+            this.TypedEntity_IsWorkingChanged(null);
         }
 
-        private void SyncTankModeOnValueChanged(MySync<TankMode, SyncDirection.BothWays> obj)
+        private void SyncTankMode_ValueChanged(MySync<int, SyncDirection.BothWays> obj)
         {
-            this.Serialise();
+            MyLog.Default.WriteLineAndConsole($"AutoRecharge SyncTankMode_ValueChanged: {this.Entity.EntityId} is now {obj.Value}");
+            this.TypedEntity_IsWorkingChanged(null);
         }
 
         private void TypedEntity_IsWorkingChanged(IMyCubeBlock obj)
@@ -179,7 +181,7 @@ namespace UnFoundBug.AutoSwitch
         private void DetachEvents()
         {
             this.TypedEntity.IsWorkingChanged -= this.TypedEntity_IsWorkingChanged;
-            this.syncTankMode.ValueChanged += this.SyncTankModeOnValueChanged;
+            this.syncTankMode.ValueChanged += this.SyncTankMode_ValueChanged;
             this.syncAutoSwitch.ValueChanged += this.SyncAutoSwitch_ValueChanged;
             this.syncStaticOnly.ValueChanged += this.SyncStaticOnly_ValueChanged;
             this.syncThrusters.ValueChanged += this.SyncThrusters_ValueChanged;

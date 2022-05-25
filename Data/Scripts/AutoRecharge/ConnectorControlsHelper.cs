@@ -65,7 +65,7 @@ namespace UnFoundBug.AutoSwitch
             staticOnlyToggle.OffText = MyStringId.GetOrCompute("Disabled");
             staticOnlyToggle.Getter = block =>
             {
-                if (block == null || block.GameLogic == null)
+                if (block?.GameLogic == null)
                 {
                     return false;
                 }
