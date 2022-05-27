@@ -88,7 +88,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>pushd $(ProjectDir)..\..\..\
-powershell -executionpolicy unrestricted -File ".\PrepPublish.ps1"
+powershell -executionpolicy unrestricted -File ".\PrepPublish.ps1" $(ConfigurationName)
 popd
 if $(ConfigurationName) == Debug (
 echo %25Space_Engineers_Path%25\SEWorkshopTool.exe  push --mods %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge --message=%25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge\README.md --visibility Private
@@ -96,8 +96,6 @@ robocopy /MIR %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge %25AppDa
 robocopy /MIR %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge D:\SteamLibrary\steamapps\workshop\content\244850\2812031542
 exit 0
 ) ELSE ( 
-Copy $(SolutionDir)..\..\..\modinfo_Release.smbi %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge --message=%25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge\modinfo.smbi
-robocopy /MIR %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge %25AppData%25\SpaceEngineersDedicated\content\244850\2812031542
 %25Space_Engineers_Path%25\SEWorkshopTool.exe  push --mods %25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge --message=%25appdata%25\SpaceEngineers\Mods\UnFoundBug.AutoRecharge\README.md 
 ) 
 </PostBuildEvent>
