@@ -12,6 +12,13 @@ Developed by UnFoundBug.
 		Static restriction only switches the batteries to recharge if the connected grid is static.
 		
 ======================
+V0.1.0:
+	Multiplayer implementation.
+		Dedicated server and player server support.
+V0.0.4:
+	Bug fix: Sometimes settings were getting lost on world load, this should be fixed now.
+	Performance improvements:
+		New method for storing connector configurations should mean save/load/change of connector configs is faster
 V0.0.3:
 	Added support for gas tank stockpiling
 		Connectors can now automatically set/clear stockpiling of gasses on connection to other grids.

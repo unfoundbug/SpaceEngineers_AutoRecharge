@@ -1,12 +1,7 @@
 $newOutDir = Join-Path $env:APPDATA "\SpaceEngineers\Mods\UnFoundBug.AutoRecharge\"
-if (Test-Path $newOutDir)
-{
-    Get-ChildItem "$newOutDir\*" -Recurse | Remove-Item
-}
-else
-{
+Remove-Item "$newOutDir" -Recurse -Force -ErrorAction SilentlyContinue
+
 mkdir "$newOutDir"
-}
 
 Get-ChildItem .\* -File | Foreach-Object { Copy-Item -Path "$($_.FullName)" -Destination "$(Join-Path $newOutDir $($_.Name))" }
 
