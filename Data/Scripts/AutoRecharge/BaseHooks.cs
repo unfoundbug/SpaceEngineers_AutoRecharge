@@ -131,7 +131,6 @@ namespace UnFoundBug.AutoSwitch
             base.Init(objectBuilder);
             this.AttachEvents();
             this.Deserialise();
-            SessionShim.Instance.AttemptControlsInit();
             this.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME | MyEntityUpdateEnum.EACH_FRAME;
         }
 
@@ -144,6 +143,7 @@ namespace UnFoundBug.AutoSwitch
         /// <inheritdoc/>
         public override void UpdateOnceBeforeFrame()
         {
+            SessionShim.Instance.AttemptControlsInit();
             this.ProcessConnector();
             base.UpdateOnceBeforeFrame();
         }
@@ -229,10 +229,10 @@ namespace UnFoundBug.AutoSwitch
 
         private void DetachEvents()
         {
-            this.syncTankMode.ValueChanged += this.SyncTankMode_ValueChanged;
-            this.syncAutoSwitch.ValueChanged += this.SyncAutoSwitch_ValueChanged;
-            this.syncStaticOnly.ValueChanged += this.SyncStaticOnly_ValueChanged;
-            this.syncThrusters.ValueChanged += this.SyncThrusters_ValueChanged;
+            this.syncTankMode.ValueChanged -= this.SyncTankMode_ValueChanged;
+            this.syncAutoSwitch.ValueChanged -= this.SyncAutoSwitch_ValueChanged;
+            this.syncStaticOnly.ValueChanged -= this.SyncStaticOnly_ValueChanged;
+            this.syncThrusters.ValueChanged -= this.SyncThrusters_ValueChanged;
         }
 
         private void HandleConnection()
